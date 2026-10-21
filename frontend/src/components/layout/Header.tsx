@@ -1,18 +1,4 @@
 import React from 'react';
-import { 
-  Bot, 
-  ShieldCheck, 
-  Cpu, 
-  GitBranch, 
-  Activity, 
-  Play, 
-  Terminal, 
-  CheckCircle2, 
-  Layers,
-  Sparkles
-} from 'lucide-react';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 
 interface HeaderProps {
   currentRepo: string;
@@ -20,6 +6,10 @@ interface HeaderProps {
   isScanning: boolean;
   onTriggerScan: () => void;
   wsConnected: boolean;
+  activeView: 'showcase' | 'workbench';
+  setActiveView: (view: 'showcase' | 'workbench') => void;
+  onOpenPrivacy: () => void;
+  onOpenTerms: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,70 +18,100 @@ export const Header: React.FC<HeaderProps> = ({
   isScanning,
   onTriggerScan,
   wsConnected,
+  activeView,
+  setActiveView,
+  onOpenPrivacy,
+  onOpenTerms,
 }) => {
   return (
-    <header className="h-12 border-b border-border bg-[#09090b] px-4 flex items-center justify-between select-none z-30">
-      {/* Brand & Mode */}
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-zinc-100 text-zinc-950 flex items-center justify-center rounded-sm font-mono font-bold text-xs">
-            <Layers className="w-3.5 h-3.5" />
-          </div>
-          <span className="font-semibold text-xs tracking-tight text-zinc-100 uppercase font-mono">
-            MAS // Remediation Engine
-          </span>
-        </div>
-
-        <div className="h-4 w-[1px] bg-zinc-800" />
-
-        <div className="flex items-center space-x-2 text-xs text-zinc-400 font-mono">
-          <span className="text-zinc-200 font-medium">Phase 1</span>
-          <span className="text-zinc-600">/</span>
-          <span className="text-zinc-400">Autonomous AST Synthesizer</span>
-        </div>
-      </div>
-
-      {/* Target Repo Quick Info */}
-      <div className="hidden md:flex items-center space-x-2 text-xs font-mono bg-zinc-900/90 border border-zinc-800/80 px-2.5 py-1 rounded-sm">
-        <span className="text-zinc-500">TARGET:</span>
-        <span className="text-zinc-200 truncate max-w-[220px]">
-          {currentRepo.replace('https://github.com/', '')}
-        </span>
-        <span className="text-zinc-600">:</span>
-        <div className="flex items-center text-zinc-400 space-x-1">
-          <GitBranch className="w-3 h-3 text-zinc-500" />
-          <span>{currentBranch}</span>
-        </div>
-      </div>
-
-      {/* Actions & Daemon Connection Status */}
-      <div className="flex items-center space-x-3">
-        <div className="flex items-center space-x-2 text-[11px] font-mono">
-          <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-500 ring-2 ring-emerald-500/20' : 'bg-amber-500 ring-2 ring-amber-500/20'}`} />
-          <span className="text-zinc-400 hidden sm:inline">
-            {wsConnected ? 'DAEMON ONLINE' : 'DAEMON STANDBY'}
-          </span>
-        </div>
-
-        <Button
-          variant={isScanning ? 'secondary' : 'primary'}
-          size="sm"
-          onClick={onTriggerScan}
-          disabled={isScanning}
-          className="h-7 text-xs font-mono"
+    <header className="h-13 border-b border-border/80 bg-surface-elevated/90 backdrop-blur-md px-6 flex items-center justify-between select-none z-30 sticky top-0">
+      {/* Brand & Identity */}
+      <div className="flex items-center space-x-6">
+        <button
+          onClick={() => setActiveView('showcase')}
+          className="flex items-center space-x-2.5 text-left group"
         >
-          {isScanning ? (
-            <>
-              <Activity className="w-3.5 h-3.5 animate-spin text-purple-400" />
-              <span>ORCHESTRATING...</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-3 h-3 fill-current" />
-              <span>RUN REMEDIATION</span>
-            </>
-          )}
-        </Button>
+          <div className="w-7 h-7 bg-ink-primary text-white flex items-center justify-center rounded-lg font-mono font-semibold text-xs transition-transform group-hover:scale-[1.02]">
+            MAS
+          </div>
+          <div>
+            <div className="font-semibold text-sm tracking-tight text-ink-primary">
+              Multi-Agent Engine
+            </div>
+            <div className="text-[11px] text-ink-tertiary hidden sm:block">
+              Autonomous AST Code Remediation
+            </div>
+          </div>
+        </button>
+
+        {/* View Mode Switcher */}
+        <nav className="flex items-center bg-surface border border-border-subtle p-0.5 rounded-lg text-xs">
+          <button
+            onClick={() => setActiveView('showcase')}
+            className={`px-3 py-1 rounded-md font-medium transition-all ${
+              activeView === 'showcase'
+                ? 'bg-surface-elevated text-ink-primary shadow-subtle'
+                : 'text-ink-secondary hover:text-ink-primary'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveView('workbench')}
+            className={`px-3 py-1 rounded-md font-medium transition-all ${
+              activeView === 'workbench'
+                ? 'bg-surface-elevated text-ink-primary shadow-subtle'
+                : 'text-ink-secondary hover:text-ink-primary'
+            }`}
+          >
+            Interactive Workbench
+          </button>
+        </nav>
+      </div>
+
+      {/* Target Repo Quick Info (When in Workbench) */}
+      {activeView === 'workbench' && (
+        <div className="hidden lg:flex items-center space-x-2 text-xs font-mono bg-surface border border-border-subtle px-3 py-1 rounded-lg">
+          <span className="text-ink-tertiary">TARGET:</span>
+          <span className="text-ink-primary font-medium truncate max-w-[200px]">
+            {currentRepo.replace('https://github.com/', '')}
+          </span>
+          <span className="text-border">:</span>
+          <span className="text-ink-secondary">{currentBranch}</span>
+        </div>
+      )}
+
+      {/* Right Actions & Health Status */}
+      <div className="flex items-center space-x-4">
+        {/* Daemon Connection Indicator */}
+        <div className="flex items-center space-x-2 text-xs font-mono">
+          <div
+            className={`w-2 h-2 rounded-full ${
+              wsConnected ? 'bg-status-success ring-4 ring-status-success/15' : 'bg-status-warning ring-4 ring-status-warning/15'
+            }`}
+          />
+          <span className="text-ink-tertiary hidden md:inline">
+            {wsConnected ? 'Daemon Online' : 'Daemon Standby'}
+          </span>
+        </div>
+
+        {/* Primary Action Button */}
+        {activeView === 'workbench' ? (
+          <button
+            onClick={onTriggerScan}
+            disabled={isScanning}
+            className="h-8 px-4 text-xs font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors shadow-subtle disabled:opacity-40 disabled:pointer-events-none"
+          >
+            {isScanning ? 'Running Analysis...' : 'Run Remediation'}
+          </button>
+        ) : (
+          <button
+            onClick={() => setActiveView('workbench')}
+            className="h-8 px-4 text-xs font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors shadow-subtle"
+          >
+            Open Workbench
+          </button>
+        )}
       </div>
     </header>
   );

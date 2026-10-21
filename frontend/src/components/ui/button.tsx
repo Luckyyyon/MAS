@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'subtle';
   size?: 'sm' | 'md' | 'lg' | 'icon';
 }
 
@@ -14,21 +14,22 @@ export const Button: React.FC<ButtonProps> = ({
   children,
   ...props
 }) => {
-  const baseClasses = "inline-flex items-center justify-center font-medium rounded-sm border transition-all select-none disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]";
+  const baseClasses = "inline-flex items-center justify-center font-normal transition-all duration-150 select-none disabled:opacity-40 disabled:pointer-events-none active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-1";
 
   const variantClasses = {
-    primary: "bg-zinc-100 text-zinc-950 hover:bg-white border-zinc-200 font-semibold shadow-sm",
-    secondary: "bg-zinc-900 text-zinc-100 hover:bg-zinc-800 border-zinc-800 hover:border-zinc-700",
-    outline: "bg-transparent text-zinc-200 hover:bg-zinc-900 border-zinc-800 hover:border-zinc-700",
-    ghost: "bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 border-transparent",
-    destructive: "bg-red-950/50 text-red-300 hover:bg-red-900/60 border-red-800/80 hover:border-red-700",
+    primary: "bg-accent text-white hover:bg-accent-hover font-medium shadow-subtle border border-transparent",
+    secondary: "bg-surface-elevated text-ink-primary hover:bg-surface-subtle border border-border hover:border-border-strong shadow-subtle",
+    outline: "bg-transparent text-ink-primary hover:bg-surface border border-border hover:border-border-strong",
+    ghost: "bg-transparent text-ink-secondary hover:text-ink-primary hover:bg-surface border-transparent",
+    subtle: "bg-surface text-ink-primary hover:bg-surface-subtle border border-border-subtle",
+    destructive: "bg-[#fdf2f2] text-status-error hover:bg-[#fae8e8] border border-[#f5c2c2]",
   }[variant];
 
   const sizeClasses = {
-    sm: "h-7 px-2.5 text-xs font-mono gap-1.5",
-    md: "h-8 px-3 text-xs gap-2",
-    lg: "h-9 px-4 text-sm gap-2",
-    icon: "h-8 w-8 p-0 flex items-center justify-center",
+    sm: "h-7 px-3 text-xs rounded-md gap-1.5",
+    md: "h-8 px-3.5 text-xs rounded-lg gap-2",
+    lg: "h-10 px-5 text-sm rounded-lg gap-2 font-medium",
+    icon: "h-8 w-8 rounded-md p-0 flex items-center justify-center",
   }[size];
 
   return (

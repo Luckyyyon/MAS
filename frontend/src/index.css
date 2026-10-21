@@ -3,39 +3,66 @@
 @tailwind utilities;
 
 @layer base {
-  * {
-    @apply border-border;
+  html {
+    background-color: #fbfbfd;
+    color: #1d1d1f;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    background-color: #fbfbfd;
+    color: #1d1d1f;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  }
+
+  /* Custom subtle focus states */
+  *:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 1px;
   }
 }
 
-/* Custom crisp scrollbars for developer consoles */
+/* Apple-style smooth hairline scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 2px;
+  background: #d2d2d7;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: #a1a1a6;
 }
 
-/* Monaco Diff Container adjustments */
+/* Monaco Diff Container light neutral aesthetic */
 .monaco-diff-editor .monaco-editor-background {
-  background-color: #0c0c0e !important;
+  background-color: #ffffff !important;
 }
 
 .monaco-diff-editor .margin {
-  background-color: #09090b !important;
+  background-color: #fbfbfd !important;
+}
+
+.monaco-editor .line-numbers {
+  color: #86868b !important;
+}
+
+/* Light line-diff insert/delete overrides for Monaco */
+.monaco-editor .char-delete,
+.monaco-editor .line-delete {
+  background-color: rgba(201, 59, 43, 0.12) !important;
+}
+
+.monaco-editor .char-insert,
+.monaco-editor .line-insert {
+  background-color: rgba(46, 125, 50, 0.12) !important;
 }

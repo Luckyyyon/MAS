@@ -1,18 +1,5 @@
 import React from 'react';
-import { 
-  ShieldAlert, 
-  Check, 
-  X, 
-  RotateCcw, 
-  ExternalLink, 
-  Sparkles, 
-  GitPullRequest,
-  CheckCircle2,
-  Info
-} from 'lucide-react';
 import { RemediationDiff } from '../../types';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 
 interface RemediationExplanationProps {
   diff: RemediationDiff;
@@ -28,58 +15,49 @@ export const RemediationExplanation: React.FC<RemediationExplanationProps> = ({
   onRerunAgent,
 }) => {
   return (
-    <div className="border-t border-border bg-[#0b0b0e] p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 select-none">
+    <div className="border-t border-border bg-surface px-4 py-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 select-none font-sans">
       {/* Left: Summary & Rationale */}
       <div className="space-y-1 max-w-3xl">
-        <div className="flex items-center space-x-2">
-          <Badge variant="agent" agentType={diff.agent} className="text-[10px]">
+        <div className="flex items-center space-x-2.5">
+          <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-surface-elevated border border-border text-ink-primary font-medium">
             {diff.agent}
-          </Badge>
-          <span className="font-mono text-xs font-semibold text-zinc-200">
+          </span>
+          <span className="font-mono text-xs font-semibold text-ink-primary">
             {diff.description}
           </span>
-          <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-1.5 py-0.5 rounded-sm">
+          <span className="text-[11px] font-mono text-status-success bg-[#f0f9f1] border border-[#c8e6c9] px-2 py-0.5 rounded-md">
             {(diff.confidence * 100).toFixed(0)}% Confidence
           </span>
         </div>
 
-        <p className="text-xs text-zinc-400 font-sans leading-relaxed">
-          <strong className="text-zinc-300 font-mono text-[11px]">Rationale: </strong> 
+        <p className="text-xs text-ink-secondary leading-relaxed">
+          <strong className="text-ink-primary font-mono text-[11px]">Rationale: </strong>
           {diff.remediation_rationale}
         </p>
       </div>
 
       {/* Right: Actions */}
       <div className="flex items-center space-x-2 flex-shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
+        <button
           onClick={() => onRerunAgent(diff.id)}
-          className="text-xs font-mono h-7"
+          className="h-8 px-3 text-xs font-medium rounded-lg bg-surface-elevated hover:bg-surface border border-border text-ink-secondary hover:text-ink-primary transition-colors shadow-subtle"
         >
-          <RotateCcw className="w-3 h-3" />
-          <span>RE-SYNTHESIZE</span>
-        </Button>
+          Re-Synthesize
+        </button>
 
-        <Button
-          variant="destructive"
-          size="sm"
+        <button
           onClick={() => onRejectPatch(diff.id)}
-          className="text-xs font-mono h-7"
+          className="h-8 px-3 text-xs font-medium rounded-lg bg-[#fdf2f2] hover:bg-[#fae8e8] border border-[#f5c2c2] text-status-error transition-colors"
         >
-          <X className="w-3 h-3" />
-          <span>REJECT</span>
-        </Button>
+          Reject
+        </button>
 
-        <Button
-          variant="primary"
-          size="sm"
+        <button
           onClick={() => onAcceptPatch(diff.id)}
-          className="text-xs font-mono h-7"
+          className="h-8 px-4 text-xs font-medium rounded-lg bg-accent hover:bg-accent-hover text-white transition-colors shadow-subtle"
         >
-          <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-          <span>ACCEPT PATCH</span>
-        </Button>
+          Accept Patch
+        </button>
       </div>
     </div>
   );

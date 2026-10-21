@@ -6,12 +6,14 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 
 from src.parser.ast_parser import PythonASTParser
+from src.core.file_manager import LocalFileManager, RepositoryScanResult
 from src.engine.workflow import RemediationEngine
 from src.models.state import RemediationGraphState, UnifiedPatchResult, StreamLogEvent, PatchProposal
 from src.config import settings
 
 router = APIRouter(prefix="/api/scans", tags=["Production Remediation Scans"])
 ast_parser = PythonASTParser()
+file_manager = LocalFileManager()
 
 # Real in-memory persistent scan database for active server session
 REAL_SCANS_DB: Dict[str, Dict[str, Any]] = {}
@@ -24,6 +26,10 @@ class DirectCodeScanRequest(BaseModel):
 
 class LocalPathScanRequest(BaseModel):
     file_path: str
+    branch: Optional[str] = "main"
+
+class LocalDirScanRequest(BaseModel):
+    dir_path: str
     branch: Optional[str] = "main"
 
 class TriggerScanRequest(BaseModel):
@@ -91,6 +97,22 @@ async def get_agents_status():
         }
     ]
 
+@router.post("/ingest-local-dir")
+async def ingest_local_dir_endpoint(request: LocalDirScanRequest):
+    """
+    Local Repository Ingestion Endpoint (Phase 3.A 70% Milestone).
+    Accepts a local directory path, recursively scans for .py files,
+    and feeds target files to the tree-sitter AST parser.
+    """
+    try:
+        scan_result = file_manager.scan_directory(request.dir_path)
+        return {
+            "status": "success",
+            "repository": scan_result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Local ingestion error: {str(e)}")
+
 @router.post("/trigger")
 async def trigger_scan(request: TriggerScanRequest):
     """Trigger a new real remediation scan workflow."""
@@ -156,8 +178,7 @@ async def remediate_local_file(request: LocalPathScanRequest):
         raise HTTPException(status_code=404, detail=f"File not found on disk: {request.file_path}")
     
     try:
-        with open(request.file_path, "r", encoding="utf-8") as f:
-            source_code = f.read()
+        source_code = file_manager.read_file(request.file_path)
 
         final_state = await RemediationEngine.run_pipeline(
             source_code=source_code,
@@ -183,6 +204,31 @@ async def remediate_local_file(request: LocalPathScanRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File remediation error: {str(e)}")
+
+class ApplyPatchRequest(BaseModel):
+    file_path: str
+    remediated_code: str
+
+@router.post("/apply-patch")
+async def apply_patch_endpoint(request: ApplyPatchRequest):
+    """
+    Directly applies and overwrites the target local source file with the accepted remediated code.
+    """
+    if not request.file_path or not request.remediated_code:
+        raise HTTPException(status_code=400, detail="file_path and remediated_code are required.")
+
+    clean_path = os.path.abspath(os.path.expanduser(request.file_path))
+    try:
+        os.makedirs(os.path.dirname(clean_path), exist_ok=True)
+        with open(clean_path, "w", encoding="utf-8") as f:
+            f.write(request.remediated_code)
+        return {
+            "status": "success",
+            "file_path": clean_path,
+            "message": f"Successfully updated local file on disk: {clean_path}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update file on disk: {str(e)}")
 
 @router.post("/upload")
 async def upload_file_for_scan(file: UploadFile = File(...)):

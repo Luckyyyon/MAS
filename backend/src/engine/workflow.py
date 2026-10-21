@@ -68,11 +68,16 @@ async def parallel_multi_agent_node(state: RemediationGraphState) -> Dict[str, A
         "Dispatched concurrent AST audit across Security, Performance, and Refactor agents in parallel..."
     ))
 
-    # Run all 3 agents simultaneously
+    async def _run_staggered(agent, delay: float):
+        if delay > 0:
+            await asyncio.sleep(delay)
+        return await agent.analyze(state.source_code, state.ast_tree)
+
+    # Run all 3 agents in parallel with slight stagger to avoid API rate limit spikes
     results = await asyncio.gather(
-        security_agent.analyze(state.source_code, state.ast_tree),
-        performance_agent.analyze(state.source_code, state.ast_tree),
-        maintainability_agent.analyze(state.source_code, state.ast_tree),
+        _run_staggered(security_agent, 0.0),
+        _run_staggered(performance_agent, 0.2),
+        _run_staggered(maintainability_agent, 0.4),
         return_exceptions=True
     )
 
@@ -109,20 +114,28 @@ async def parallel_multi_agent_node(state: RemediationGraphState) -> Dict[str, A
     }
 
 async def conflict_resolution_node(state: RemediationGraphState) -> Dict[str, Any]:
-    """Node 3: Reconcile proposed diffs and generate clean unified patch."""
+    """Node 3: Reconcile proposed diffs and generate clean unified patch via Supervisor conflict resolution engine."""
     logs = list(state.logs)
     logs.append(create_log("Supervisor", "EXEC", f"Reconciling {len(state.agent_patches)} proposed patches across agents..."))
 
-    unified_result = await diff_resolver.resolve_and_apply(
+    unified_result = await supervisor.resolve_conflicts(
         source_code=state.source_code,
         file_path=state.file_path,
-        patches=state.agent_patches
+        patches=state.agent_patches,
+        ast_tree=state.ast_tree,
+        save_temp_file=True
     )
+
+    for note in unified_result.conflict_notes:
+        if "[Supervisor Conflict Engine]" in note:
+            logs.append(create_log("Supervisor", "WARN", note))
+        elif "saved locally" in note.lower():
+            logs.append(create_log("Supervisor", "INFO", note))
 
     if unified_result.conflicts_resolved > 0:
         logs.append(create_log(
-            "Supervisor", "WARN",
-            f"Resolved {unified_result.conflicts_resolved} overlapping patch conflicts via LLM meta-synthesis."
+            "Supervisor", "SUCCESS",
+            f"Resolved {unified_result.conflicts_resolved} overlapping patch conflicts via deterministic AST priority engine."
         ))
 
     if unified_result.syntax_validated:

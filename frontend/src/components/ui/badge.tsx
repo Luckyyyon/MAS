@@ -14,15 +14,15 @@ export const Badge: React.FC<BadgeProps> = ({
   children,
   ...props
 }) => {
-  const baseClasses = "inline-flex items-center px-2 py-0.5 text-xs font-mono font-medium rounded-sm border transition-colors";
+  const baseClasses = "inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium rounded-md border transition-colors";
   
   const variantClasses = {
-    default: "bg-zinc-800 text-zinc-100 border-zinc-700",
-    secondary: "bg-zinc-900 text-zinc-400 border-zinc-800",
-    outline: "bg-transparent text-zinc-300 border-zinc-700",
-    destructive: "bg-red-950/40 text-red-400 border-red-800/60",
-    success: "bg-emerald-950/40 text-emerald-400 border-emerald-800/60",
-    warning: "bg-amber-950/40 text-amber-400 border-amber-800/60",
+    default: "bg-surface-elevated text-ink-primary border-border-subtle",
+    secondary: "bg-surface text-ink-secondary border-border-subtle",
+    outline: "bg-transparent text-ink-secondary border-border",
+    destructive: "bg-[#fdf2f2] text-status-error border-[#f5c2c2]",
+    success: "bg-[#f0f9f1] text-status-success border-[#c8e6c9]",
+    warning: "bg-[#fff8e1] text-status-warning border-[#ffe082]",
     agent: getAgentClasses(agentType)
   }[variant];
 
@@ -36,14 +36,14 @@ export const Badge: React.FC<BadgeProps> = ({
 function getAgentClasses(agentType?: string) {
   switch (agentType) {
     case 'Supervisor':
-      return "bg-purple-950/40 text-purple-300 border-purple-800/60";
+      return "bg-[#f2f2f7] text-[#3a3a3c] border-[#d1d1d6]";
     case 'Security Agent':
-      return "bg-rose-950/40 text-rose-300 border-rose-800/60";
+      return "bg-[#fdf2f2] text-status-error border-[#f5c2c2]";
     case 'Performance Agent':
-      return "bg-blue-950/40 text-blue-300 border-blue-800/60";
+      return "bg-[#e8f2fc] text-accent border-[#b3d7f7]";
     case 'Syntax & Refactor Agent':
-      return "bg-emerald-950/40 text-emerald-300 border-emerald-800/60";
+      return "bg-[#f0f9f1] text-status-success border-[#c8e6c9]";
     default:
-      return "bg-zinc-800 text-zinc-200 border-zinc-700";
+      return "bg-surface text-ink-primary border-border";
   }
 }

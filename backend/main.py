@@ -2,19 +2,24 @@ import os
 import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 # Ensure backend root is in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    def load_dotenv():
+        pass
+    load_dotenv()
 
 from src.api.routes import router as real_scans_router
 from src.api.ws_handler import ws_router as real_ws_router
 
 app = FastAPI(
     title="Autonomous Multi-Agent Code Remediation Engine API",
-    description="Production-grade real backend: Tree-sitter AST, LangGraph multi-agent orchestration, Groq/Ollama LLM engine, and live telemetry streaming.",
+    description="Production-grade real backend: Tree-sitter AST, LangGraph multi-agent orchestration, Groq LLM engine, and live telemetry streaming.",
     version="2.0.0"
 )
 
@@ -37,7 +42,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "real-multi-agent-remediation-engine",
-        "phase": 2,
+        "phase": "3.A",
         "llm_provider": "Ollama" if settings.use_ollama else "Groq",
         "model": settings.ollama_model if settings.use_ollama else settings.groq_model,
         "agents_online": [
@@ -51,4 +56,6 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Enable reload only if explicitly requested, preventing mid-scan WebSocket disconnects
+    should_reload = os.getenv("UVICORN_RELOAD", "false").lower() in ("true", "1", "yes")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=should_reload)

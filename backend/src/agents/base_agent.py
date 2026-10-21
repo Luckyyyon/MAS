@@ -1,10 +1,12 @@
 import json
 import uuid
 import re
+import asyncio
 from typing import List, Dict, Any, Type, Optional
 from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage
-from src.config import get_llm
+
+from src.config import get_llm, settings
 from src.models.state import PatchProposal, AgentCategory, PatchSeverity
 
 class AgentPatchOutputSchema(BaseModel):
@@ -12,7 +14,7 @@ class AgentPatchOutputSchema(BaseModel):
     proposals: List[PatchProposal] = Field(default_factory=list)
 
 class BaseRemediationAgent:
-    """Base class for specialized LLM remediation agents with AST context injection."""
+    """Base class for specialized LLM remediation agents with AST context injection & rate-limit resilience."""
     
     def __init__(self, name: str, category: AgentCategory):
         self.name = name
@@ -41,11 +43,38 @@ class BaseRemediationAgent:
     def _clean_json_response(self, text: str) -> str:
         """Extract and clean raw JSON from LLM markdown fenced codeblocks."""
         text = text.strip()
-        # Remove ```json ... ``` wrapper
         match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text)
         if match:
             return match.group(1).strip()
         return text
+
+    async def _invoke_llm_with_resilience(self, messages: List[Any]) -> str:
+        """
+        Executes LLM invocation with rate limit detection, exponential backoff,
+        and automatic fallback model switching to prevent 429 Too Many Requests errors.
+        """
+        models_to_try = [settings.groq_model, settings.groq_fallback_model]
+        max_attempts_per_model = 3
+
+        last_error = None
+        for model in models_to_try:
+            llm = get_llm(temperature=0.1, json_mode=True, model_override=model)
+            for attempt in range(max_attempts_per_model):
+                try:
+                    response = await llm.ainvoke(messages)
+                    return response.content if isinstance(response.content, str) else str(response.content)
+                except Exception as e:
+                    last_error = e
+                    err_msg = str(e).lower()
+                    if "429" in err_msg or "rate limit" in err_msg or "tpms" in err_msg or "rpms" in err_msg:
+                        backoff = 1.0 * (2 ** attempt)
+                        print(f"[{self.name} WARN] Groq rate limit hit for model {model} (Attempt {attempt+1}/{max_attempts_per_model}). Retrying in {backoff:.1f}s...")
+                        await asyncio.sleep(backoff)
+                    else:
+                        print(f"[{self.name} WARN] LLM call error on model {model}: {e}. Retrying...")
+                        await asyncio.sleep(0.5)
+
+        raise RuntimeError(f"All LLM retry attempts exhausted. Last error: {last_error}")
 
     async def execute_analysis(
         self,
@@ -54,8 +83,7 @@ class BaseRemediationAgent:
         system_prompt: str,
         specific_instructions: str
     ) -> List[PatchProposal]:
-        """Execute real LLM call against source code with strict JSON extraction."""
-        llm = get_llm(temperature=0.1, json_mode=True)
+        """Execute real LLM call against source code with strict JSON extraction and rate limit protection."""
         ast_summary = self._build_ast_context(ast_data)
 
         # Number lines for explicit token positioning
@@ -104,8 +132,7 @@ If NO actionable issues are found, return {{"proposals": []}}.
         ]
 
         try:
-            response = await llm.ainvoke(messages)
-            raw_text = response.content if isinstance(response.content, str) else str(response.content)
+            raw_text = await self._invoke_llm_with_resilience(messages)
             cleaned_json = self._clean_json_response(raw_text)
             parsed_data = json.loads(cleaned_json)
             

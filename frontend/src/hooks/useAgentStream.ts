@@ -39,12 +39,28 @@ export function useAgentStream(
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  // Use ref for onScanComplete callback to avoid tearing down WebSocket connections on re-render
+  const onScanCompleteRef = useRef(onScanComplete);
+  useEffect(() => {
+    onScanCompleteRef.current = onScanComplete;
+  }, [onScanComplete]);
+
+  const addLog = useCallback((log: TerminalLog) => {
+    setLogs((prev) => [...prev, log]);
+  }, []);
+
   const connectWebSocket = useCallback((id: string) => {
+    // If already connected to this scanId, do not reconnect!
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
     if (wsRef.current) {
       wsRef.current.close();
     }
 
-    const wsUrl = `ws://${window.location.hostname}:8000/ws/agent-stream/${id}`;
+    const host = window.location.hostname || "localhost";
+    const wsUrl = `ws://${host}:8000/ws/agent-stream/${id}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -72,8 +88,8 @@ export function useAgentStream(
 
         if (data.type === 'SCAN_COMPLETE') {
           setIsStreaming(false);
-          if (data.payload && onScanComplete) {
-            onScanComplete(data.payload);
+          if (data.payload && onScanCompleteRef.current) {
+            onScanCompleteRef.current(data.payload);
           }
         }
       } catch (err) {
@@ -83,7 +99,7 @@ export function useAgentStream(
 
     ws.onerror = () => {
       setIsConnected(false);
-      console.warn("FastAPI WebSocket disconnected. Emulating agent telemetry locally.");
+      console.warn("FastAPI WebSocket connection error.");
     };
 
     ws.onclose = () => {
@@ -92,17 +108,13 @@ export function useAgentStream(
     };
 
     wsRef.current = ws;
-  }, [onScanComplete]);
+  }, [addLog]);
 
-  const addLog = (log: TerminalLog) => {
-    setLogs((prev) => [...prev, log]);
-  };
-
-  const clearLogs = () => {
+  const clearLogs = useCallback(() => {
     setLogs([]);
-  };
+  }, []);
 
-  const sendAgentCommand = (cmd: string) => {
+  const sendAgentCommand = useCallback((cmd: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(cmd);
     } else {
@@ -114,7 +126,7 @@ export function useAgentStream(
         message: `Dashboard Command Triggered: ${cmd}`,
       });
     }
-  };
+  }, [addLog]);
 
   useEffect(() => {
     if (scanId) {
@@ -123,6 +135,7 @@ export function useAgentStream(
     return () => {
       if (wsRef.current) {
         wsRef.current.close();
+        wsRef.current = null;
       }
     };
   }, [scanId, connectWebSocket]);

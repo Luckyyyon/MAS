@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: ["class"],
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,56 +7,76 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#09090b", // Deep zinc black (matte)
-        foreground: "#f4f4f5", // Zinc 100
-        card: {
-          DEFAULT: "#0f0f11",
-          foreground: "#f4f4f5",
-          hover: "#141418"
+        canvas: "#fbfbfd",
+        surface: {
+          DEFAULT: "#f5f5f7",
+          elevated: "#ffffff",
+          subtle: "#f2f2f4",
+          card: "#ffffff",
         },
-        popover: {
-          DEFAULT: "#0f0f11",
-          foreground: "#f4f4f5",
-        },
-        primary: {
-          DEFAULT: "#fafafa",
-          foreground: "#09090b",
-        },
-        secondary: {
-          DEFAULT: "#18181b",
-          foreground: "#fafafa",
-        },
-        muted: {
-          DEFAULT: "#27272a",
-          foreground: "#a1a1aa",
+        ink: {
+          primary: "#1d1d1f",
+          secondary: "#86868b",
+          tertiary: "#6e6e73",
+          quaternary: "#a1a1a6",
+          inverse: "#ffffff",
         },
         accent: {
-          DEFAULT: "#27272a",
-          foreground: "#fafafa",
+          DEFAULT: "#0071e3",
+          hover: "#0077ed",
+          subtle: "#e8f2fc",
+          foreground: "#ffffff",
         },
-        destructive: {
-          DEFAULT: "#7f1d1d",
-          foreground: "#fca5a5",
+        border: {
+          DEFAULT: "#d2d2d7",
+          subtle: "#e5e5ea",
+          strong: "#a1a1a6",
         },
-        border: "#27272a",
-        input: "#18181b",
-        ring: "#d4d4d8",
         agent: {
-          supervisor: "#a855f7",
-          security: "#ef4444",
-          performance: "#3b82f6",
-          syntax: "#10b981",
+          supervisor: "#48484a",
+          security: "#c93b2b",
+          performance: "#0071e3",
+          syntax: "#2e7d32",
+        },
+        status: {
+          success: "#2e7d32",
+          warning: "#b25e02",
+          error: "#c93b2b",
+          info: "#0071e3",
         }
       },
       borderRadius: {
-        lg: "6px",
-        md: "4px",
-        sm: "2px",
+        xl: "14px",
+        lg: "10px",
+        md: "8px",
+        sm: "6px",
+        xs: "4px",
       },
       fontFamily: {
-        sans: ["Geist", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-        mono: ["'JetBrains Mono'", "'Fira Code'", "Consolas", "monospace"],
+        sans: [
+          "-apple-system",
+          "BlinkMacSystemFont",
+          '"SF Pro Text"',
+          '"SF Pro Display"',
+          '"Helvetica Neue"',
+          "Helvetica",
+          "Arial",
+          "sans-serif",
+        ],
+        mono: [
+          '"SF Mono"',
+          "Menlo",
+          "Monaco",
+          '"Consolas"',
+          '"Liberation Mono"',
+          "monospace",
+        ],
       },
+      boxShadow: {
+        subtle: "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+        card: "0 4px 16px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03)",
+        elevated: "0 12px 32px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04)",
+      }
     },
   },
   plugins: [],
